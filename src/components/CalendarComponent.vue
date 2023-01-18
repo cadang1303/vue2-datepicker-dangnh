@@ -234,7 +234,7 @@ export default {
     onSelectDay(day) {
       this.date = new Date(day.date);
       this.selected = new Date(day.date);
-      this.$emit("onSelect", this.selected);
+      this.$emit("onSelect", this.convertSelected);
       this.$emit("input", this.convertSelected);
     },
     setDateToday() {
@@ -256,10 +256,10 @@ export default {
       }
 
       if (month < 9) {
-        month = `${month}`;
+        month = `0${month + 1}`;
       }
 
-      return `${year}-${month + 1}-${day}`;
+      return `${year}-${month}-${day}`;
     },
   },
 };

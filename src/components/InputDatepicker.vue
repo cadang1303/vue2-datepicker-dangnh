@@ -52,6 +52,13 @@ export default {
       showDatepicker: false,
     };
   },
+  watch: {
+    datetime: function (value) {
+      if (value) {
+        this.$emit("input", value);
+      }
+    },
+  },
   methods: {
     toggleDatePicker() {
       this.isFocused = !this.isFocused;
@@ -73,6 +80,8 @@ export default {
       this.$emit("onSelect", val);
     },
     onClear() {
+      this.isFocused = false;
+      this.showDatepicker = false;
       this.$emit("onClear");
     },
   },

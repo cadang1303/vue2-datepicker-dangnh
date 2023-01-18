@@ -21,6 +21,7 @@ export default {
   methods: {
     onSelect(val) {
       this.value = val;
+      console.log(this.value);
     },
   },
   components: {
