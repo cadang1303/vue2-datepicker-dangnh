@@ -132,6 +132,15 @@ export default {
       return this.convertDate(this.selected);
     },
   },
+  watch: {
+    value: {
+      handler(val) {
+        this.selected = new Date(val);
+      },
+      deep: true,
+      immediate: true,
+    },
+  },
   methods: {
     getPrevMonthDays() {
       let days = [];

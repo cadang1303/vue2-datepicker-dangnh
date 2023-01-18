@@ -55,11 +55,11 @@ export default {
   methods: {
     toggleDatePicker() {
       this.isFocused = !this.isFocused;
+      this.showDatepicker = !this.showDatepicker;
       this.$refs[this.refs].focus();
     },
     focus() {
       this.isFocused = true;
-      this.showDatepicker = true;
       this.$emit("onFocus");
     },
     blur() {
