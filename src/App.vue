@@ -1,16 +1,21 @@
 <template>
   <div id="app">
-    <CalendarComponent />
+    <input-datepicker v-model="value" />
   </div>
 </template>
 
 <script>
-import CalendarComponent from "./components/CalendarComponent.vue";
+import InputDatepicker from "./components/InputDatepicker.vue";
 
 export default {
   name: "App",
+  data() {
+    return {
+      value: null,
+    };
+  },
   components: {
-    CalendarComponent,
+    InputDatepicker,
   },
 };
 </script>
@@ -20,16 +25,11 @@ export default {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
 }
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: "Quicksand", sans-serif;
-}
-html {
-  font-size: 62.5%;
 }
 </style>

@@ -1,62 +1,78 @@
 <template>
-  <div class="container">
+  <div class="wrapper">
+    <div class="header">
+      <div class="change-date">
+        <i class="fa-solid fa-chevron-left" @click="toPrevMonth"></i>
+        <div class="current-date">{{ monthText }}</div>
+        <i class="fa-solid fa-chevron-right" @click="toNextMonth"></i>
+      </div>
+
+      <div class="change-date">
+        <i class="fa-solid fa-chevron-left" @click="toPrevYear"></i>
+        <div class="current-date">{{ currYear }}</div>
+        <i class="fa-solid fa-chevron-right" @click="toNextYear"></i>
+      </div>
+    </div>
     <div class="calendar">
-      <div class="month">
-        <i class="fas fa-angle-left prev" @click="prevMonth"></i>
-        <div class="date">
-          <h1>{{ shortMonth }}</h1>
-          <p>{{ selected }}</p>
-        </div>
-        <i class="fas fa-angle-right next" @click="nextMonth"></i>
-      </div>
-      <div class="weekdays">
-        <div v-for="weekday in weekdays" :key="weekday">{{ weekday }}</div>
-      </div>
-      <div class="days">
-        <div
-          :class="{}"
-          @click="onSelect(day)"
-          v-for="day in daysContent"
-          :key="day.id"
+      <ul class="weeks">
+        <li class="weekday" v-for="weekday in weekdays" :key="weekday">
+          {{ weekday }}
+        </li>
+      </ul>
+      <ul class="days">
+        <li
+          class="day inactive"
+          :class="{ active: prevday.isSelected }"
+          v-for="prevday in prevMonthDays"
+          :key="prevday.id"
+          @click="onSelectDay(prevday)"
         >
-          {{ day }}
-        </div>
-      </div>
+          {{ prevday.day }}
+        </li>
+        <li
+          class="day"
+          :class="{ active: monthday.isSelected }"
+          v-for="monthday in monthDays"
+          :key="monthday.id"
+          @click="onSelectDay(monthday)"
+        >
+          {{ monthday.day }}
+        </li>
+        <li
+          class="day inactive"
+          :class="{ active: nextday.isSelected }"
+          v-for="nextday in nextMonthDays"
+          :key="nextday.id"
+          @click="onSelectDay(nextday)"
+        >
+          {{ nextday.day }}
+        </li>
+      </ul>
       <div class="footer">
-        <div class="btn-clear">Clear</div>
+        <div class="btn-today" @click="setDateToday">Today</div>
+        <div class="btn-clear" @click="clearSelected">Clear</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { formatDate } from "@/utils/date";
-
 export default {
   created() {
-    this.date.setDate(1);
-    // for (let x = this.firstDayIndex; x > 0; x--) {
-    //   this.days += `<div class="prev-date" @click="onSelect()">${
-    //     this.prevLastDay - x + 1
-    //   }</div>`;
-    // }
-    // for (let i = 1; i <= this.lastDayOfMonth; i++) {
-    //   if (
-    //     i === new Date().getDate() &&
-    //     this.date.getMonth() === new Date().getMonth()
-    //   ) {
-    //     this.days += `<div class="today" @click="onSelect()">${i}</div>`;
-    //   } else this.days += `<div @click="onSelect()">${i}</div>`;
-    // }
-    // for (let j = 1; j <= this.nextDays; j++) {
-    //   this.days += `<div class="next-date" @click="onSelect()">${j}</div>`;
-    // }
+    if (this.value && this.value.length > 0) {
+      this.date = new Date(this.value);
+    }
+  },
+  props: {
+    value: {
+      default: null,
+      required: true,
+    },
   },
   data() {
     return {
       date: new Date(),
-      days: [],
-      selectedDay: "",
+      selected: null,
       months: [
         "January",
         "February",
@@ -75,158 +91,279 @@ export default {
     };
   },
   computed: {
-    year() {
-      return this.date.getFullYear();
+    today() {
+      return new Date();
     },
-    month() {
+    currMonth() {
       return this.date.getMonth();
     },
-    shortMonth() {
-      return this.months[this.date.getMonth()];
+    currYear() {
+      return this.date.getFullYear();
     },
-    prevLastDay() {
-      return new Date(this.year, this.month, 0).getDate();
+    monthText() {
+      return this.months[this.currMonth];
+    },
+    firstDayOfMonth() {
+      return new Date(this.currYear, this.currMonth, 1).getDay();
+    },
+    lastDateOfMonth() {
+      return new Date(this.currYear, this.currMonth + 1, 0).getDate();
+    },
+    lastDateOfLastMonth() {
+      return new Date(this.currYear, this.currMonth, 0).getDate();
     },
     lastDayOfMonth() {
       return new Date(
-        this.date.getFullYear(),
-        this.date.getMonth() + 1,
-        0
-      ).getDate();
-    },
-    firstDayIndex() {
-      return this.date.getDay();
-    },
-    lastDayIndex() {
-      return new Date(
-        this.date.getFullYear(),
-        this.date.getMonth() + 1,
-        0
+        this.currYear,
+        this.currMonth,
+        this.lastDateOfMonth
       ).getDay();
     },
-    nextDays() {
-      return 7 - this.lastDayIndex;
+    monthDays() {
+      return this.getMonthDays();
     },
-    daysContent() {
-      return this.getDays();
+    prevMonthDays() {
+      return this.getPrevMonthDays();
     },
-    selected() {
-      return this.selectedDay ? formatDate(this.selectedDay) : "";
+    nextMonthDays() {
+      return this.getNextMonthDays();
+    },
+    convertSelected() {
+      return this.convertDate(this.selected);
     },
   },
   methods: {
-    getDays() {
-      for (let i = 1; i <= this.lastDayOfMonth; i++) {
-        this.days.push(i);
+    getPrevMonthDays() {
+      let days = [];
+      let month;
+      let year;
+      let day;
+      if (this.currMonth == 0) {
+        month = 11;
+        year = this.currYear - 1;
+      } else {
+        month = this.currMonth - 1;
+        year = this.currYear;
       }
-      return this.days;
+      for (let i = this.firstDayOfMonth; i > 0; i--) {
+        day = this.lastDateOfLastMonth - i + 1;
+        days.push({
+          day: day,
+          month: month,
+          year: year,
+          date: new Date(year, month, day),
+          isSelected: this.checkActive(day, month, year),
+          active: false,
+        });
+      }
+
+      return days;
     },
-    onSelect(day) {
-      console.log(day);
-      this.selectedDay = new Date(`${this.year}-${this.month}-${day}`);
+    getMonthDays() {
+      let days = [];
+      let day;
+      let month = this.currMonth;
+      let year = this.currYear;
+      for (let i = 1; i <= this.lastDateOfMonth; i++) {
+        day = i;
+        days.push({
+          day: day,
+          month: month,
+          year: year,
+          date: new Date(year, month, i),
+          isSelected: this.checkActive(day, month, year),
+          active: true,
+        });
+      }
+
+      return days;
     },
-    nextMonth() {
-      console.log(this.date);
-      this.date.setMonth(this.date.getMonth() + 1);
-      console.log(this.date);
+    getNextMonthDays() {
+      let days = [];
+      let month;
+      let year;
+      let day;
+      if (this.currMonth === 11) {
+        month = 0;
+        year = this.currYear + 1;
+      } else {
+        month = this.currMonth + 1;
+        year = this.currYear;
+      }
+      for (let i = this.lastDayOfMonth; i < 6; i++) {
+        day = i - this.lastDayOfMonth + 1;
+        days.push({
+          day: day,
+          month: month,
+          year: year,
+          date: new Date(year, month, day),
+          isSelected: this.checkActive(day, month, year),
+          active: false,
+        });
+      }
+      return days;
     },
-    prevMonth() {
-      this.date.setMonth(this.date.getMonth() - 1);
+    checkActive(day, month, year) {
+      return (
+        day === this.selected?.getDate() &&
+        month === this.selected?.getMonth() &&
+        year === this.selected?.getFullYear()
+      );
+    },
+    toPrevMonth() {
+      this.date = new Date(this.date.setMonth(this.currMonth - 1));
+    },
+    toNextMonth() {
+      this.date = new Date(this.date.setMonth(this.currMonth + 1));
+    },
+    toPrevYear() {
+      this.date = new Date(this.date.setFullYear(this.currYear - 1));
+    },
+    toNextYear() {
+      this.date = new Date(this.date.setFullYear(this.currYear + 1));
+    },
+    onSelectDay(day) {
+      this.date = new Date(day.date);
+      this.selected = new Date(day.date);
+      this.$emit("onSelect", this.selected);
+      this.$emit("input", this.convertSelected);
+    },
+    setDateToday() {
+      this.date = new Date();
+      this.selected = this.date;
+    },
+    clearSelected() {
+      this.selected = null;
+      this.$emit("input", null);
+      this.$emit("onClear");
+    },
+    convertDate(date) {
+      let day = date.getDate();
+      let month = date.getMonth();
+      let year = date.getFullYear();
+
+      if (day < 10) {
+        day = `0${day}`;
+      }
+
+      if (month < 9) {
+        month = `${month}`;
+      }
+
+      return `${year}-${month + 1}-${day}`;
     },
   },
 };
 </script>
 
 <style scoped>
-.container {
-  width: 100%;
-  height: 100vh;
-  background: #12121f;
-  color: #eee;
+.wrapper {
+  position: relative;
+  width: 270px;
+  background: #fff;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  /* box-shadow: 5px; */
+}
+.wrapper .header {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: space-between;
+  padding: 15px 15px 10px;
+}
+.header .current-date {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.header .change-date {
+  display: flex;
+  gap: 10px;
+}
+.header .change-date i {
+  height: 14px;
+  width: 14px;
+  background: #f2f2f2;
+  color: #878787;
+  font-size: 0.9rem;
+  margin: 0 1px;
+  text-align: center;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 14px;
+}
+.header .icons i:last-child {
+  margin-right: -10px;
+}
+.header .icons i:hover {
+  background: #f2f2f2;
 }
 .calendar {
-  width: 45rem;
-  height: 52rem;
-  background: #222227;
-  box-shadow: 0 0.5rem 3rem rgba(0, 0, 0, 0.4);
+  padding: 10px;
+  font-size: 0.8rem;
 }
-.month {
-  width: 100%;
-  height: 12rem;
-  background: #167e56;
+.calendar ul {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 2rem;
-  text-align: center;
-  text-shadow: 0 0.3rem 0.5rem rgba(0, 0, 0, 0.5);
-}
-.month i {
-  font-size: 2.5rem;
-  cursor: pointer;
-}
-.month h1 {
-  font-size: 3rem;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.2rem;
-  margin-bottom: 1rem;
-}
-.month p {
-  font-size: 1.6rem;
-}
-.weekdays {
-  width: 100%;
-  height: 5rem;
-  padding: 0 0.4rem;
-  display: flex;
-  align-items: center;
-}
-.weekdays div {
-  font-size: 1.5rem;
-  font-weight: 400;
-  letter-spacing: 0.1rem;
-  width: calc(44.2rem / 7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-shadow: 0 0.3rem 0.5rem rgba(0, 0, 0, 0.5);
-}
-.days {
-  width: 100%;
-  display: flex;
+  list-style: none;
   flex-wrap: wrap;
-  padding: 0.2rem;
+  text-align: center;
 }
-.days div {
-  font-size: 1.4rem;
-  margin: 0.3rem;
-  width: calc(40.2rem / 7);
-  height: 5rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-shadow: 0 0.3rem 0.5rem rgba(0, 0, 0, 0.5);
-  transition: background-color 0.2s;
+.calendar .weeks li {
+  font-weight: 400;
 }
-.days div:hover:not(.today) {
-  background-color: #262626;
-  border: 0.2rem solid #777;
+.calendar ul li {
+  position: relative;
+  width: calc(100% / 7);
 }
-.days .prev-date,
-.days .next-date {
-  opacity: 0.5;
+.calendar .days {
+  margin-bottom: 10px;
 }
-.days .today {
-  background: #167e56;
+.calendar .days li {
+  z-index: 1;
+  cursor: pointer;
+  margin-top: 30px;
+}
+.calendar ul li::before {
+  position: absolute;
+  content: "";
+  height: 30px;
+  width: 30px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  /* background: #f2f2f2; */
+  z-index: -1;
+}
+.calendar .days li:hover {
+  color: #fff;
+}
+.calendar .days li:hover::before {
+  background: #80aaff;
+}
+.calendar .days li.inactive {
+  color: #aaa;
+}
+.calendar .days li.active {
+  font-weight: 700;
+  color: #fff;
+}
+.calendar .days li.active::before {
+  background: #4d88ff;
 }
 .footer {
-  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 10px;
 }
-.footer .btn-clear {
+.footer div {
+  margin-right: 5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #aaa;
   cursor: pointer;
+}
+.footer div:hover {
+  color: #333;
 }
 </style>
