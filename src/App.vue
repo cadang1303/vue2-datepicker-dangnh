@@ -1,6 +1,10 @@
 <template>
   <div id="app">
-    <input-datepicker v-model="value" />
+    <input-datepicker
+      v-model="value"
+      placeholder="Select Date"
+      @onSelect="onSelect"
+    />
   </div>
 </template>
 
@@ -13,6 +17,11 @@ export default {
     return {
       value: null,
     };
+  },
+  methods: {
+    onSelect(val) {
+      this.value = val;
+    },
   },
   components: {
     InputDatepicker,

@@ -4,7 +4,7 @@
       <input
         type="text"
         class="datepicker-input"
-        placeholder="Select Date"
+        :placeholder="placeholder"
         v-model="datetime"
         :ref="refs"
         @focus="focus"
@@ -16,7 +16,7 @@
     </div>
     <CalendarComponent
       v-model="datetime"
-      v-if="showDatepicker"
+      v-show="showDatepicker"
       @onSelect="onSelect"
     />
   </div>
@@ -64,11 +64,12 @@ export default {
     },
     blur() {
       this.isFocused = false;
-      this.showDatepicker = false;
       this.$emit("onBlur");
     },
     onSelect(val) {
+      this.isFocused = false;
       this.showDatepicker = false;
+      this.datetime = val;
       this.$emit("onSelect", val);
     },
     onClear() {
