@@ -56,10 +56,13 @@ export default {
     };
   },
   watch: {
-    datetime: function (value) {
-      if (value) {
-        this.$emit("input", value);
-      }
+    datetime: {
+      handler(value) {
+        if (value) {
+          this.$emit("input", value);
+        }
+      },
+      immediate: true,
     },
   },
   methods: {

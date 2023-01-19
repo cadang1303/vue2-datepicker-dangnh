@@ -15,7 +15,7 @@ export default {
   name: "App",
   data() {
     return {
-      value: null,
+      value: "2022-12-23",
     };
   },
   methods: {
