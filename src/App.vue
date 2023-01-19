@@ -15,13 +15,12 @@ export default {
   name: "App",
   data() {
     return {
-      value: "2022-12-23",
+      value: null,
     };
   },
   methods: {
     onSelect(val) {
       this.value = val;
-      console.log(this.value);
     },
   },
   components: {

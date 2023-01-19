@@ -2,23 +2,27 @@
   <div class="date-picker">
     <div class="overlay-popup" @click="closePopup"></div>
     <div class="wrapper">
-      <div class="header">
+      <div class="header" v-if="mode === 'chooseDate'">
         <div class="change-date">
           <i class="fa-solid fa-chevron-left" @click="toPrevMonth"></i>
-          <div class="current-date">{{ monthText }}</div>
+          <p class="current-date" @click="chooseMonth">
+            {{ monthText }}
+          </p>
           <i class="fa-solid fa-chevron-right" @click="toNextMonth"></i>
         </div>
 
         <div class="change-date">
           <i class="fa-solid fa-chevron-left" @click="toPrevYear"></i>
-          <div class="current-date">{{ currYear }}</div>
+          <div class="current-date" @click="chooseYear">
+            {{ currYear }}
+          </div>
           <i class="fa-solid fa-chevron-right" @click="toNextYear"></i>
         </div>
       </div>
-      <div class="calendar">
+      <div class="calendar" v-if="mode == 'chooseDate'">
         <ul class="weeks">
-          <li class="weekday" v-for="weekday in weekdays" :key="weekday">
-            {{ weekday }}
+          <li class="weekday" v-for="weekday in weekdays" :key="weekday.key">
+            {{ weekday.shortDay }}
           </li>
         </ul>
         <ul class="days">
@@ -55,16 +59,47 @@
           <div class="btn-clear" @click="clearSelected">Clear</div>
         </div>
       </div>
+      <div class="calendar-month" v-if="mode == 'chooseMonth'">
+        <div class="current-date">{{ monthText }}</div>
+        <ul class="months">
+          <li
+            class="month"
+            v-for="month in months"
+            :key="month.key"
+            @click="onSelectMonth(month.key)"
+          >
+            {{ month.shortMonth }}
+          </li>
+        </ul>
+      </div>
+      <div class="calendar-year" v-if="mode == 'chooseYear'">
+        <i class="fa-solid fa-chevron-left" @click="toPrevYearRange"></i>
+        <ul class="years">
+          <li
+            class="year"
+            v-for="year in years"
+            :key="year"
+            @click="onSelectYear(year)"
+          >
+            {{ year }}
+          </li>
+        </ul>
+        <i class="fa-solid fa-chevron-right" @click="toNextYearRange"></i>
+      </div>
     </div>
   </div>
 </template>
-
+;
 <script>
 export default {
   created() {
+    this.mode = "chooseDate";
+    this.getMonthList();
+    this.getWeekdays();
     if (this.value && this.value.length > 0) {
       this.date = new Date(this.value);
     }
+    this.getYearList(this.currYear);
   },
   props: {
     value: {
@@ -76,21 +111,10 @@ export default {
     return {
       date: new Date(),
       selected: null,
-      months: [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ],
-      weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      months: [],
+      years: [],
+      mode: "chooseDate",
+      weekdays: [],
     };
   },
   computed: {
@@ -104,7 +128,7 @@ export default {
       return this.date.getFullYear();
     },
     monthText() {
-      return this.months[this.currMonth];
+      return this.date.toLocaleString("default", { month: "long" });
     },
     firstDayOfMonth() {
       return new Date(this.currYear, this.currMonth, 1).getDay();
@@ -145,6 +169,50 @@ export default {
     },
   },
   methods: {
+    getWeekdays() {
+      let baseDate = new Date(2023, 0, 1);
+      this.weekdays = [];
+      for (let i = 0; i < 7; i++) {
+        let data = {
+          key: i,
+          shortDay: baseDate.toLocaleDateString("default", {
+            weekday: "short",
+          }),
+          longDay: baseDate.toLocaleDateString("default", { weekday: "long" }),
+        };
+        this.weekdays.push(data);
+        baseDate.setDate(baseDate.getDate() + 1);
+      }
+    },
+    getMonthList() {
+      this.months = [];
+      for (let i = 0; i < 12; i++) {
+        let data = {
+          key: i + 1,
+          shortMonth: new Date(null, i + 1, null).toLocaleDateString(
+            "default",
+            { month: "short" }
+          ),
+          longMonth: new Date(null, i + 1, null).toLocaleDateString("default", {
+            month: "long",
+          }),
+          isSelected: this.selected?.getMonth() === i,
+        };
+        this.months.push(data);
+      }
+    },
+    getYearList(from) {
+      this.years = [];
+      for (let j = 1; j < 9; j++) {
+        this.years.push(from - j);
+      }
+
+      this.years.reverse();
+
+      for (let i = 0; i < 10; i++) {
+        this.years.push(from + i);
+      }
+    },
     getPrevMonthDays() {
       let days = [];
       let month;
@@ -170,6 +238,12 @@ export default {
       }
 
       return days;
+    },
+    chooseMonth() {
+      this.mode = "chooseMonth";
+    },
+    chooseYear() {
+      this.mode = "chooseYear";
     },
     getMonthDays() {
       let days = [];
@@ -234,11 +308,27 @@ export default {
     toNextYear() {
       this.date = new Date(this.date.setFullYear(this.currYear + 1));
     },
+    toPrevYearRange() {
+      let year = this.years[0] - 10;
+      this.getYearList(year);
+    },
+    toNextYearRange() {
+      let year = this.years.slice(-1).pop() + 9;
+      this.getListYear(year);
+    },
     onSelectDay(day) {
       this.date = new Date(day.date);
       this.selected = new Date(day.date);
       this.$emit("onSelect", this.convertSelected);
       this.$emit("input", this.convertSelected);
+    },
+    onSelectYear(year) {
+      this.date = new Date(this.date.setFullYear(year));
+      this.mode = "chooseDate";
+    },
+    onSelectMonth(month) {
+      this.date = new Date(this.date.setMonth(month - 1));
+      this.mode = "chooseDate";
     },
     setDateToday() {
       this.date = new Date();
@@ -253,17 +343,9 @@ export default {
       this.$emit("closePopup", false);
     },
     convertDate(date) {
-      let day = date.getDate();
-      let month = date.getMonth()+1;
+      let day = date.toLocaleDateString("default", { day: "2-digit" });
+      let month = date.toLocaleDateString("default", { month: "2-digit" });
       let year = date.getFullYear();
-
-      if (day < 10) {
-        day = `0${day}`;
-      }
-
-      if (month < 10) {
-        month = `0${month}`;
-      }
 
       return year + "-" + month + "-" + day;
     },
@@ -302,9 +384,10 @@ export default {
   justify-content: space-between;
   padding: 15px 15px 10px;
 }
-.header .current-date {
+.current-date {
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
+  cursor: pointer;
 }
 .header .change-date {
   display: flex;
@@ -332,7 +415,9 @@ export default {
   padding: 10px;
   font-size: 0.8rem;
 }
-.calendar ul {
+.calendar ul,
+.calendar-year ul,
+.calendar-month ul {
   display: flex;
   list-style: none;
   flex-wrap: wrap;
@@ -390,11 +475,42 @@ export default {
 .footer div {
   margin-right: 5px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #aaa;
   cursor: pointer;
 }
 .footer div:hover {
   color: #333;
+}
+.calendar-month,
+.calendar-year {
+  padding: 20px;
+  font-size: 1rem;
+}
+.calendar-month ul li {
+  position: relative;
+  width: calc(100% / 3);
+  font-weight: 500;
+  padding: 10px;
+  cursor: pointer;
+}
+.calendar-month .current-date {
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.calendar-year {
+  display: flex;
+  align-items: center;
+}
+.calendar-year i {
+  cursor: pointer;
+}
+.calendar-year ul li {
+  position: relative;
+  padding: 10px;
+  width: calc(100% / 3);
+  font-weight: 600;
+  cursor: pointer;
 }
 </style>

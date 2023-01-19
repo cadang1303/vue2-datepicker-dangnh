@@ -15,7 +15,7 @@
         <i class="fa-regular fa-calendar"></i>
       </span>
     </div>
-    <CalendarComponent
+    <DatepickerSingle
       v-model="datetime"
       v-if="showDatepicker"
       @closePopup="showDatepicker = $event"
@@ -26,13 +26,13 @@
 </template>
 
 <script>
-import CalendarComponent from "./CalendarComponent.vue";
+import DatepickerSingle from "./DatepickerSingle.vue";
 export default {
   created() {
     this.datetime = this.value;
   },
   components: {
-    CalendarComponent,
+    DatepickerSingle,
   },
   props: {
     value: {
@@ -121,8 +121,13 @@ export default {
   color: #888;
   cursor: pointer;
   margin-top: 2px;
+  transition: color 0.5s ease;
 }
 .datepicker-icon-right:hover {
+  color: #333;
+}
+
+.datepicker.focus .datepicker-icon-right {
   color: #333;
 }
 .focus {
