@@ -9,6 +9,7 @@
         :ref="refs"
         @focus="focus"
         @blur="blur"
+        @keydown.prevent="inputPrevent"
       />
       <span class="datepicker-icon-right" @click="toggleDatePicker">
         <i class="fa-regular fa-calendar"></i>
@@ -16,8 +17,10 @@
     </div>
     <CalendarComponent
       v-model="datetime"
-      v-show="showDatepicker"
+      v-if="showDatepicker"
+      @closePopup="showDatepicker = $event"
       @onSelect="onSelect"
+      @onClear="onClear"
     />
   </div>
 </template>
@@ -61,12 +64,12 @@ export default {
   },
   methods: {
     toggleDatePicker() {
-      this.isFocused = !this.isFocused;
       this.showDatepicker = !this.showDatepicker;
       this.$refs[this.refs].focus();
     },
     focus() {
       this.isFocused = true;
+      this.showDatepicker = true;
       this.$emit("onFocus");
     },
     blur() {
@@ -74,15 +77,14 @@ export default {
       this.$emit("onBlur");
     },
     onSelect(val) {
-      this.isFocused = false;
       this.showDatepicker = false;
-      this.datetime = val;
       this.$emit("onSelect", val);
     },
     onClear() {
-      this.isFocused = false;
-      this.showDatepicker = false;
       this.$emit("onClear");
+    },
+    inputPrevent() {
+      return true;
     },
   },
 };

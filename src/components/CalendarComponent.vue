@@ -1,56 +1,59 @@
 <template>
-  <div class="wrapper">
-    <div class="header">
-      <div class="change-date">
-        <i class="fa-solid fa-chevron-left" @click="toPrevMonth"></i>
-        <div class="current-date">{{ monthText }}</div>
-        <i class="fa-solid fa-chevron-right" @click="toNextMonth"></i>
-      </div>
+  <div class="date-picker">
+    <div class="overlay-popup" @click="closePopup"></div>
+    <div class="wrapper">
+      <div class="header">
+        <div class="change-date">
+          <i class="fa-solid fa-chevron-left" @click="toPrevMonth"></i>
+          <div class="current-date">{{ monthText }}</div>
+          <i class="fa-solid fa-chevron-right" @click="toNextMonth"></i>
+        </div>
 
-      <div class="change-date">
-        <i class="fa-solid fa-chevron-left" @click="toPrevYear"></i>
-        <div class="current-date">{{ currYear }}</div>
-        <i class="fa-solid fa-chevron-right" @click="toNextYear"></i>
+        <div class="change-date">
+          <i class="fa-solid fa-chevron-left" @click="toPrevYear"></i>
+          <div class="current-date">{{ currYear }}</div>
+          <i class="fa-solid fa-chevron-right" @click="toNextYear"></i>
+        </div>
       </div>
-    </div>
-    <div class="calendar">
-      <ul class="weeks">
-        <li class="weekday" v-for="weekday in weekdays" :key="weekday">
-          {{ weekday }}
-        </li>
-      </ul>
-      <ul class="days">
-        <li
-          class="day inactive"
-          :class="{ active: prevday.isSelected }"
-          v-for="prevday in prevMonthDays"
-          :key="prevday.id"
-          @click="onSelectDay(prevday)"
-        >
-          {{ prevday.day }}
-        </li>
-        <li
-          class="day"
-          :class="{ active: monthday.isSelected }"
-          v-for="monthday in monthDays"
-          :key="monthday.id"
-          @click="onSelectDay(monthday)"
-        >
-          {{ monthday.day }}
-        </li>
-        <li
-          class="day inactive"
-          :class="{ active: nextday.isSelected }"
-          v-for="nextday in nextMonthDays"
-          :key="nextday.id"
-          @click="onSelectDay(nextday)"
-        >
-          {{ nextday.day }}
-        </li>
-      </ul>
-      <div class="footer">
-        <div class="btn-today" @click="setDateToday">Today</div>
-        <div class="btn-clear" @click="clearSelected">Clear</div>
+      <div class="calendar">
+        <ul class="weeks">
+          <li class="weekday" v-for="weekday in weekdays" :key="weekday">
+            {{ weekday }}
+          </li>
+        </ul>
+        <ul class="days">
+          <li
+            class="day inactive"
+            :class="{ active: prevday.isSelected }"
+            v-for="prevday in prevMonthDays"
+            :key="prevday.id"
+            @click="onSelectDay(prevday)"
+          >
+            {{ prevday.day }}
+          </li>
+          <li
+            class="day"
+            :class="{ active: monthday.isSelected }"
+            v-for="monthday in monthDays"
+            :key="monthday.id"
+            @click="onSelectDay(monthday)"
+          >
+            {{ monthday.day }}
+          </li>
+          <li
+            class="day inactive"
+            :class="{ active: nextday.isSelected }"
+            v-for="nextday in nextMonthDays"
+            :key="nextday.id"
+            @click="onSelectDay(nextday)"
+          >
+            {{ nextday.day }}
+          </li>
+        </ul>
+        <div class="footer">
+          <div class="btn-today" @click="setDateToday">Today</div>
+          <div class="btn-clear" @click="clearSelected">Clear</div>
+        </div>
       </div>
     </div>
   </div>
@@ -246,6 +249,9 @@ export default {
       this.$emit("input", null);
       this.$emit("onClear");
     },
+    closePopup() {
+      this.$emit("closePopup", false);
+    },
     convertDate(date) {
       let day = date.getDate();
       let month = date.getMonth();
@@ -266,6 +272,22 @@ export default {
 </script>
 
 <style scoped>
+.date-picker {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  z-index: 999;
+}
+.date-picker .overlay-popup {
+  position: fixed;
+  content: "";
+  z-index: -1;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  background: 0 0;
+}
 .wrapper {
   position: relative;
   width: 270px;
